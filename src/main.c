@@ -1,22 +1,11 @@
 #include "stdio.h"
 #include "stdbool.h"
+
 #include "raylib.h"
 #include "raymath.h"
 
-#define G_WHITE (Color){ 239, 239, 239, 255 }
-#define G_BLACK (Color){ 44,  44,  44,  255 }
-#define G_RED   (Color){ 240, 96,  39,  255 }
-#define G_GREEN (Color){ 6,   167, 125, 255 }
-
-typedef struct {
-    Vector2 position;
-    Vector2 direction;
-} ray_t;
-
-typedef struct {
-    Vector2 a;
-    Vector2 b;
-} line_t;
+#include "common.h"
+#include "aabb.h"
 
 void ray_draw(ray_t ray)
 {
@@ -34,39 +23,22 @@ void ray_draw(ray_t ray)
                G_RED);
 }
 
-void line_draw(line_t line)
+void line_draw(line_t line, Color color)
 {
     DrawLine(line.a.x,
              line.a.y,
              line.b.x,
              line.b.y,
-             G_BLACK);
+             color);
 }
 
-typedef struct {
-    Vector2 point;
-    bool    hit;
-} line_projection_result_t;
-
-line_projection_result_t line_projectPoint(line_t line, Vector2 point)
+void rect_draw(rect_t rect, Color color)
 {
-    float abx = line.b.x - line.a.x;
-    float aby = line.b.y - line.a.y;
-    float acx = point.x - line.a.x;
-    float acy = point.y - line.a.y;
-
-    float coeff = (abx * acx + aby * acy) /
-                  (abx * abx + aby * aby);
-    float dx    = line.a.x + abx * coeff;
-    float dy    = line.a.y + aby * coeff;
-
-    bool hit = (coeff >= 0.0f - EPSILON) &&
-               (coeff <= 1.0f + EPSILON);
-
-    return (line_projection_result_t){
-        .point = { dx, dy },
-        .hit   = hit,
-    };
+    DrawRectangle(rect.x,
+                  rect.y,
+                  rect.w,
+                  rect.h,
+                  color);
 }
 
 int main(int argc, char ** argv)
@@ -74,51 +46,102 @@ int main(int argc, char ** argv)
     InitWindow(800, 600, "Hello, Worm");
     SetTargetFPS(60);
 
-    ray_t ray = {
-        .position  = { 400, 200 },
-        .direction = { 0.5, 1 },
+    rect_t rect_a = {
+        .x = 100,
+        .y = 100,
+        .w = 25,
+        .h = 25,
     };
 
-    line_t line = {
-        .a = { 100, 300 },
-        .b = { 600, 500 },
-    };
+    rect_t walls[255];
+    size_t wall_size = 0;
+
+    for (size_t i = 0; i < 12; i += 1) {
+        walls[wall_size] = (rect_t){
+            .x = 0,
+            .y = (50 * i),
+            .w = 50,
+            .h = 50,
+        };
+        wall_size += 1;
+    }
+
+    for (size_t i = 0; i < 12; i += 1) {
+        walls[wall_size] = (rect_t){
+            .x = 750,
+            .y = (50 * i),
+            .w = 50,
+            .h = 50,
+        };
+        wall_size += 1;
+    }
+
+    for (size_t i = 0; i < 14; i += 1) {
+        walls[wall_size] = (rect_t){
+            .x = 50 + (50 * i),
+            .y = 0,
+            .w = 50,
+            .h = 50,
+        };
+        wall_size += 1;
+    }
+
+    for (size_t i = 0; i < 14; i += 1) {
+        walls[wall_size] = (rect_t){
+            .x = 50 + (50 * i),
+            .y = 550,
+            .w = 50,
+            .h = 50,
+        };
+        wall_size += 1;
+    }
 
     while (!WindowShouldClose())
     {
-        ray.position = Vector2Add(ray.position, Vector2Scale(ray.direction, 30 * GetFrameTime()));
+        rect_a.vx = 0;
+        rect_a.vy = 0;
 
-        line_projection_result_t res = line_projectPoint(line, ray.position);
+        if (IsKeyDown(KEY_W)) rect_a.vy -= 1;
+        if (IsKeyDown(KEY_S)) rect_a.vy += 1;
+        if (IsKeyDown(KEY_A)) rect_a.vx -= 1;
+        if (IsKeyDown(KEY_D)) rect_a.vx += 1;
 
-        Vector2 to_projection = Vector2Normalize((Vector2){ res.point.x - ray.position.x, res.point.y - ray.position.y });
+        Vector2 velocity = Vector2Normalize((Vector2){ rect_a.vx, rect_a.vy });
+        rect_a.vx        = velocity.x;
+        rect_a.vy        = velocity.y;
 
-        if (Vector2DotProduct(ray.direction, to_projection) < 0 && res.hit) {
-            ray.position = res.point;
+        rect_t rect_a_previous = rect_a;
+
+        float player_speed = 200 * GetFrameTime();
+
+        Vector2 position = Vector2Add((Vector2){ rect_a.x, rect_a.y }, Vector2Scale((Vector2){ rect_a.vx, rect_a.vy }, player_speed));
+        rect_a.x         = position.x;
+        rect_a.y         = position.y;
+
+        for (size_t i = 0; i < wall_size; i += 1) {
+            rect_t target = walls[i];
+
+            if (aabb_isColliding(rect_a, target))
+            {
+                collision_side_t collision_side = aabb_getCollisionSide(rect_a_previous, target);
+
+                Vector2 position = aabb_getCorrectedLocation(rect_a, target, collision_side);
+                rect_a.x         = position.x;
+                rect_a.y         = position.y;
+            }
         }
 
         BeginDrawing();
         ClearBackground(G_WHITE);
 
-        ray_draw(ray);
-        line_draw(line);
+        rect_draw(rect_a, G_RED);
 
-        if (res.hit) {
-            const int line_length = 20;
-
-            DrawLine(res.point.x,
-                     res.point.y,
-                     res.point.x + (to_projection.x * line_length),
-                     res.point.y + (to_projection.y * line_length),
-                     G_BLACK);
-            DrawCircle(res.point.x,
-                       res.point.y,
-                       3, // radius
-                       G_GREEN);
+        for (size_t i = 0; i < wall_size; i += 1) {
+            rect_draw(walls[i], G_BLACK);
         }
 
         EndDrawing();
     }
 
-    CloseWindow();    
+    CloseWindow();
 }
-
