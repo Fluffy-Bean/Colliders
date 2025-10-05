@@ -1,11 +1,7 @@
 // Most of the code originates from https://community.monogame.net/t/trouble-with-solid-collision-response/17008/2
 // with slight adjustments
 
-#include "stdbool.h"
-
-#include "raylib.h"
-#include "raymath.h"
-
+#include "common.h"
 #include "aabb.h"
 
 bool aabb_isColliding(rect_t a, rect_t b)
@@ -120,16 +116,16 @@ Vector2 aabb_getCorrectedLocation(rect_t a, rect_t b, collision_side_t collision
 
 float aabb_getDistance(rect_t a, rect_t b)
 {
-    Vector2 a_center = {rect_middleX(a), rect_middleY(a)};
-    Vector2 b_center = {rect_middleX(b), rect_middleY(b)};
+    Vector2 a_center = rect_middle(a);
+    Vector2 b_center = rect_middle(b);
 
     return Vector2Distance(a_center, b_center);
 }
 
 float aabb_getDistanceSquared(rect_t a, rect_t b)
 {
-    Vector2 a_center = {rect_middleX(a), rect_middleY(a)};
-    Vector2 b_center = {rect_middleX(b), rect_middleY(b)};
+    Vector2 a_center = rect_middle(a);
+    Vector2 b_center = rect_middle(b);
 
     return Vector2DistanceSqr(a_center, b_center);
 }

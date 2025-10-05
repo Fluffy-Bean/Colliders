@@ -1,7 +1,6 @@
 #ifndef COLLIDERS_AABB_H
 #define COLLIDERS_AABB_H
 
-#include "raylib.h"
 #include "common.h"
 
 typedef enum {
