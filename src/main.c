@@ -75,11 +75,12 @@ int main(int argc, char ** argv)
 	poly_t poly_a = {
 		.position = { 200, 200 },
 		.points = (Vector2 []){
-			{ -50, 10 },
-			{ 50, 10 },
-			{ 0, -40 },
+			{ -50, -50 },
+			{ -50, 50 },
+			{ 50, 50 },
+			{ 50, -50 },
 		},
-		.points_count = 3,
+		.points_count = 4,
 	};
 
 	poly_t poly_b = {
