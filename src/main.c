@@ -1,6 +1,7 @@
 #include "common.h"
 #include "aabb.h"
 #include "sat.h"
+#include "physics.h"
 
 #define PLAYER_SPEED 200
 
@@ -65,12 +66,14 @@ int main(int argc, char ** argv)
     InitWindow(800, 600, "Hello, Worm");
     SetTargetFPS(60);
 
-    rect_t rect = {
-        .x = 100,
-        .y = 100,
-        .w = 25,
-        .h = 25,
-    };
+    world_t phys_world = {0};
+    world_Create(&phys_world);
+
+    for (size_t i = 0; i < 770; i += 1)
+    {
+        collider_t c = {0};
+        world_AddCollider(&phys_world, c);
+    }
 
 	poly_t poly_a = {
 		.position = { 200, 200 },
@@ -93,45 +96,9 @@ int main(int argc, char ** argv)
 		.points_count = 3,
 	};
 
-    rect_t walls[255];
-    size_t wall_size = 0;
-
-    for (size_t i = 0; i < 5; i += 1)
-    {
-        walls[wall_size] = (rect_t){
-            .x = 300 + (50 * i),
-            .y = 200 + (50 * i),
-            .w = 50,
-            .h = 50,
-        };
-        wall_size += 1;
-    }
-
     while (!WindowShouldClose())
     {
 		poly_a.position = GetMousePosition();
-
-        rect_t rect_previous = rect;
-
-		Vector2 velocity = Vector2Normalize((Vector2){ rect.vx, rect.vy });
-        Vector2 position = Vector2Add((Vector2){ rect.x, rect.y }, Vector2Scale((Vector2){ velocity.x, velocity.y }, PLAYER_SPEED * GetFrameTime()));
-
-        rect.x = position.x;
-        rect.y = position.y;
-
-        for (size_t i = 0; i < wall_size; i += 1)
-		{
-            rect_t target = walls[i];
-
-            if (aabb_isColliding(rect, target))
-            {
-                collision_side_t collision_side = aabb_getCollisionSide(rect_previous, target);
-
-                Vector2 position = aabb_getCorrectedLocation(rect, target, collision_side);
-                rect.x           = position.x;
-                rect.y           = position.y;
-            }
-        }
 
 		float poly_collision_depth = sat_getCollisionDepth(poly_b, poly_a);
 		if (poly_collision_depth > 0)
@@ -143,18 +110,13 @@ int main(int argc, char ** argv)
         BeginDrawing();
         ClearBackground(G_WHITE);
 
-        rect_draw(rect, G_RED);
-
-        for (size_t i = 0; i < wall_size; i += 1)
-		{
-            rect_draw(walls[i], G_BLACK);
-        }
-
-		polygon_draw(poly_a, G_BLACK);
-		polygon_draw(poly_b, G_BLACK);
+		polygon_draw(poly_a, G_RED);
+		polygon_draw(poly_b, G_GREEN);
 
         EndDrawing();
     }
+
+    world_Destroy(&phys_world);
 
     CloseWindow();
 }

@@ -4,6 +4,8 @@ const src = [_][]const u8 {
     "main.c",
     "aabb.c",
     "sat.c",
+    "array.c",
+    "physics.c",
 };
 
 pub fn build(b: *std.Build) void {
@@ -28,8 +30,17 @@ pub fn build(b: *std.Build) void {
     exe.addCSourceFiles(.{
         .root = b.path("src/"),
         .files = &src,
-        .flags = &.{},
+        .flags = &.{
+            "-fsanitize=address",
+        },
     });
+
+    switch (target.result.os.tag) {
+        .linux => {
+            exe.linkSystemLibrary("asan");
+        },
+        else => {},
+    }
 
     exe.installLibraryHeaders(raylib_artifact);
     exe.linkLibrary(raylib_artifact);
