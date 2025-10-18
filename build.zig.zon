@@ -1,0 +1,13 @@
+.{
+    .name = .Colliders,
+    .version = "0.0.1",
+    .minimum_zig_version = "0.15.2",
+    .paths = .{""},
+    .fingerprint = 0x8182379a081b37c3,
+    .dependencies = .{
+        .raylib = .{
+            .url = "git+https://github.com/raysan5/raylib#af068ec020f2c57f0b4de228e8c2721c20aa6a94",
+            .hash = "raylib-5.6.0-dev-whq8uODR4QS_7m0DSnKI1wQtQSNZl8VoUcTZeL7_ArMS",
+        },
+    },
+}

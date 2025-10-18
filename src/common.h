@@ -1,13 +1,13 @@
 #ifndef COLLIDERS_COMMON_H
 #define COLLIDERS_COMMON_H
 
-#include "stdio.h"
-#include "stddef.h"
-#include "stdint.h"
-#include "stdbool.h"
+#include <stdio.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
 
-#include "raylib.h"
-#include "raymath.h"
+#include <raylib.h>
+#include <raymath.h>
 
 #define G_WHITE (Color){ 239, 239, 239, 255 }
 #define G_BLACK (Color){ 44,  44,  44,  255 }
