@@ -7,7 +7,7 @@
 #define PLAYER_SPEED  250
 
 // Inefficient, but its for testing anyways...
-void polygon_draw(polygon_t polygon, Color color)
+void polygon_Draw(polygon_t polygon, Color color)
 {
     for (int i = 0; i < polygon.count; i += 1)
     {
@@ -18,7 +18,7 @@ void polygon_draw(polygon_t polygon, Color color)
     }
 }
 
-void polygon_drawLines(polygon_t polygon, Color color)
+void polygon_DrawLines(polygon_t polygon, Color color)
 {
     for (int i = 0; i < polygon.count; i += 1)
     {
@@ -28,7 +28,7 @@ void polygon_drawLines(polygon_t polygon, Color color)
     }
 }
 
-void rect_draw(rectangle_t rect, Color color)
+void rect_Draw(rectangle_t rect, Color color)
 {
     DrawRectangle(rect.x,
                   rect.y,
@@ -55,8 +55,8 @@ int main(int argc, char ** argv)
 		collider_t c = {
             .shape = {
 				.position = {
-                    GetRandomValue(0, 200),
-                    GetRandomValue(0, 200),
+                    .x = GetRandomValue(0, 200),
+                    .y = GetRandomValue(0, 200),
 			    },
                 .points = (Vector2[]){
 	                { -25, -25 },
@@ -72,8 +72,28 @@ int main(int argc, char ** argv)
         world_AddCollider(&phys_world, c);
     }
 
+    for (size_t i = 0; i < 5; i += 1)
+    {
+		collider_t c = {
+            .shape = {
+				.position = {
+                    .x = 100 * i,
+                    .y = 100 * i,
+			    },
+                .points = (Vector2[]){
+	                { -50, -50 },
+	                { -50, 50 },
+	                { 50, 50 },
+                },
+                .count = 3,
+			},
+			.kind = COLLIDER_KIND_STRUCTURE,
+			.enabled = true,
+        };
+        world_AddCollider(&phys_world, c);
+    }
+
 	collider_t *collider = collider_array_Get(&phys_world.colliders, 0);
-	collider->kind       = COLLIDER_KIND_STRUCTURE;
 
     while (!WindowShouldClose())
     {
@@ -96,11 +116,13 @@ int main(int argc, char ** argv)
         ClearBackground(G_WHITE);
         BeginMode2D(camera);
 
-        polygon_draw(collider->shape, G_RED);
-		for (size_t i = 1; i < phys_world.colliders.count; i += 1)
+        polygon_Draw(collider->shape, G_RED);
+		ARRAY_FOR(phys_world.colliders, i)
 	    {
-	    	collider_t *collider_i = collider_array_Get(&phys_world.colliders, i);
-            polygon_draw(collider_i->shape, G_GREEN);
+	    	collider_t *collider_i     = collider_array_Get(&phys_world.colliders, i);
+            Color       collider_color = collider_i->kind == COLLIDER_KIND_STRUCTURE ? G_BLACK : G_GREEN;
+
+            polygon_DrawLines(collider_i->shape, collider_color);
 	    }
 
         EndMode2D();

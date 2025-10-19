@@ -18,14 +18,13 @@ void world_Destroy(world_t *world)
 
 void world_Update(world_t *world, float dt)
 {
-	for (size_t i = 0; i < world->colliders.count; i += 1)
+	ARRAY_FOR(world->colliders, i)
 	{
 		collider_t *collider_i = collider_array_Get(&world->colliders, i);
 		if (collider_i->kind == COLLIDER_KIND_STRUCTURE) continue;
 		if (!collider_i->enabled)                        continue;
 
-        for (size_t j = 0; j < world->colliders.count; j += 1)
-		{
+        ARRAY_FOR(world->colliders, j) {
 			if (i == j) continue;
 
 			collider_t *collider_j = collider_array_Get(&world->colliders, j);

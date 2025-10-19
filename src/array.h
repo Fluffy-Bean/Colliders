@@ -10,6 +10,9 @@
 #define ARRAY_START_SIZE 8
 #define ARRAY_GROW_SIZE  2
 
+#define ARRAY_FOR(ARRAY, INDEX)                                                                                        \
+    for (size_t (INDEX) = 0; (INDEX) < (ARRAY).count; (INDEX) += 1)
+
 #define DEFINE_ARRAY(T, PREFIX)                                                                                        \
     typedef struct {                                                                                                   \
         T      *data;                                                                                                  \
