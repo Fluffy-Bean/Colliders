@@ -1,6 +1,4 @@
 #include "common.h"
-#include "aabb.h"
-#include "sat.h"
 #include "physics.h"
 
 #define PLAYER_SPEED 200
@@ -69,49 +67,40 @@ int main(int argc, char ** argv)
     world_t phys_world = {0};
     world_Create(&phys_world);
 
-    for (size_t i = 0; i < 770; i += 1)
+    for (size_t i = 0; i < 16; i += 1)
     {
-        collider_t c = {0};
+		poly_t c = {
+            .position = {
+				GetRandomValue(100, 700),
+				GetRandomValue(100, 500),
+			},
+            .points = (Vector2[]){
+	            { -25, -25 },
+	            { -25, 25 },
+	            { 25, 25 },
+	            { 25, -25 },
+            },
+            .points_count = 4,
+        };
         world_AddCollider(&phys_world, c);
     }
 
-	poly_t poly_a = {
-		.position = { 200, 200 },
-		.points = (Vector2 []){
-			{ -50, -50 },
-			{ -50, 50 },
-			{ 50, 50 },
-			{ 50, -50 },
-		},
-		.points_count = 4,
-	};
-
-	poly_t poly_b = {
-		.position = { 200, 200 },
-		.points = (Vector2 []){
-			{ 0, 40 },
-			{ 50, -10 },
-			{ -50, -10 },
-		},
-		.points_count = 3,
-	};
-
     while (!WindowShouldClose())
     {
-		poly_a.position = GetMousePosition();
+		poly_t *poly = collider_array_Get(&phys_world.colliders, 0);
+        poly->position = GetMousePosition();
 
-		float poly_collision_depth = sat_getCollisionDepth(poly_b, poly_a);
-		if (poly_collision_depth > 0)
-		{
-			Vector2 position = sat_getCorrectedLocation(poly_b, poly_a, poly_collision_depth);
-			poly_b.position  = position;
-		}
+        world_Update(&phys_world, GetFrameTime());
 
         BeginDrawing();
         ClearBackground(G_WHITE);
 
-		polygon_draw(poly_a, G_RED);
-		polygon_draw(poly_b, G_GREEN);
+		polygon_draw(*poly, G_RED);
+		for (size_t i = 1; i < phys_world.colliders.count; i += 1)
+	    {
+	    	poly_t *poly_i = collider_array_Get(&phys_world.colliders, i);
+            polygon_draw(*poly_i, G_GREEN);
+	    }
 
         EndDrawing();
     }

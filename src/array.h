@@ -58,12 +58,12 @@
     }                                                                                                                  \
     void PREFIX##_array_Set(PREFIX##_array_t *array, size_t index, T item)                                             \
     {                                                                                                                  \
-        assert(index > 0 && index < array->count);                                                                     \
+        assert(index >= 0 && index < array->count);                                                                     \
         array->data[index] = item;                                                                                     \
     }                                                                                                                  \
     T* PREFIX##_array_Get(PREFIX##_array_t *array, size_t index)                                                       \
     {                                                                                                                  \
-        assert(index > 0 && index < array->count);                                                                     \
+        assert(index >= 0 && index < array->count);                                                                     \
         return array->data + index;                                                                                    \
     }
 
