@@ -25,31 +25,6 @@ void polygon_drawLines(poly_t polygon, Color color)
     }
 }
 
-void ray_draw(ray_t ray)
-{
-    const int line_length = 20;
-
-    DrawLine(ray.position.x,
-             ray.position.y,
-             ray.position.x + (ray.direction.x * line_length),
-             ray.position.y + (ray.direction.y * line_length),
-             G_BLACK);
-
-    DrawCircle(ray.position.x,
-               ray.position.y,
-               3, // radius
-               G_RED);
-}
-
-void line_draw(line_t line, Color color)
-{
-    DrawLine(line.a.x,
-             line.a.y,
-             line.b.x,
-             line.b.y,
-             color);
-}
-
 void rect_draw(rect_t rect, Color color)
 {
     DrawRectangle(rect.x,
@@ -67,39 +42,44 @@ int main(int argc, char ** argv)
     world_t phys_world = {0};
     world_Create(&phys_world);
 
-    for (size_t i = 0; i < 16; i += 1)
+    for (size_t i = 0; i < 128; i += 1)
     {
-		poly_t c = {
-            .position = {
-				GetRandomValue(100, 700),
-				GetRandomValue(100, 500),
+		collider_t c = {
+            .shape = {
+				.position = {
+                    GetRandomValue(100, 700),
+                    GetRandomValue(100, 500),
+			    },
+                .points = (Vector2[]){
+	                { -25, -25 },
+	                { -25, 25 },
+	                { 25, 25 },
+	                { 25, -25 },
+                },
+                .points_count = 4,
 			},
-            .points = (Vector2[]){
-	            { -25, -25 },
-	            { -25, 25 },
-	            { 25, 25 },
-	            { 25, -25 },
-            },
-            .points_count = 4,
+			.kind = COLLIDER_KIND_ENTITY,
+			.enabled = true,
         };
         world_AddCollider(&phys_world, c);
     }
 
+	collider_t *collider = collider_array_Get(&phys_world.colliders, 0);
+	collider->kind       = COLLIDER_KIND_STRUCTURE;
     while (!WindowShouldClose())
     {
-		poly_t *poly = collider_array_Get(&phys_world.colliders, 0);
-        poly->position = GetMousePosition();
+        collider->shape.position = GetMousePosition();
 
         world_Update(&phys_world, GetFrameTime());
 
         BeginDrawing();
         ClearBackground(G_WHITE);
 
-		polygon_draw(*poly, G_RED);
+		polygon_draw(collider->shape, G_RED);
 		for (size_t i = 1; i < phys_world.colliders.count; i += 1)
 	    {
-	    	poly_t *poly_i = collider_array_Get(&phys_world.colliders, i);
-            polygon_draw(*poly_i, G_GREEN);
+	    	collider_t *collider_i = collider_array_Get(&phys_world.colliders, i);
+            polygon_draw(collider_i->shape, G_GREEN);
 	    }
 
         EndDrawing();

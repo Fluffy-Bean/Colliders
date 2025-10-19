@@ -18,16 +18,6 @@
 #define max(a, b) (a > b ? a : b)
 
 typedef struct {
-    Vector2 position;
-    Vector2 direction;
-} ray_t;
-
-typedef struct {
-    Vector2 a;
-    Vector2 b;
-} line_t;
-
-typedef struct {
     float x,  y;
     float w,  h;
     float vx, vy;
@@ -42,9 +32,9 @@ typedef struct {
 #define rect_middle(r)  ((Vector2){rect_middleX(r), rect_middleY(r)})
 
 typedef struct {
-    Vector2   position;
-    Vector2 * points;
-    size_t    points_count;
+    Vector2  position;
+    Vector2 *points;
+    size_t   points_count;
 } poly_t;
 
 // Get polygon point but wrap it to the start

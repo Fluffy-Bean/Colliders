@@ -3,7 +3,7 @@
 #include "sat.h"
 #include "physics.h"
 
-IMPLEMENT_ARRAY(poly_t, collider);
+IMPLEMENT_ARRAY(collider_t, collider);
 
 void world_Create(world_t *world)
 {
@@ -19,24 +19,42 @@ void world_Update(world_t *world, float dt)
 {
 	for (size_t i = 0; i < world->colliders.count; i += 1)
 	{
+		collider_t *collider_i = collider_array_Get(&world->colliders, i);
+		if (collider_i->kind == COLLIDER_KIND_STRUCTURE) continue;
+		if (!collider_i->enabled)                        continue;
+
         for (size_t j = 0; j < world->colliders.count; j += 1)
 		{
 			if (i == j) continue;
 
-			poly_t *poly_i = collider_array_Get(&world->colliders, i);
-			poly_t *poly_j = collider_array_Get(&world->colliders, j);
+			collider_t *collider_j = collider_array_Get(&world->colliders, j);
+			if (!collider_j->enabled) continue;
 
-		    float depth = sat_getCollisionDepth(*poly_i, *poly_j);
+		    float depth = sat_getCollisionDepth(collider_i->shape, collider_j->shape);
 	        if (depth > 0)
 			{
-				// ToDo: I dont like how I have to divide the depth by 2... it doesn't feel right
-				poly_i->position = sat_getCorrectedLocation(*poly_i, *poly_j, depth/2);
+				switch (collider_j->kind) {
+					case COLLIDER_KIND_STRUCTURE: {
+						collider_i->shape.position = sat_getCorrectedLocation(collider_i->shape, collider_j->shape, depth);
+						break;
+					}
+
+					case COLLIDER_KIND_ENTITY: {
+						collider_i->shape.position = sat_getCorrectedLocation(collider_i->shape, collider_j->shape, depth / 2);
+						break;
+					}
+
+					case COLLIDER_KIND_AREA: {
+						 // ToDo: Call a function or something here
+						break;
+					}
+				}
 			}
 		}
 	}
 }
 
-void world_AddCollider(world_t *world, poly_t item)
+void world_AddCollider(world_t *world, collider_t item)
 {
     collider_array_Push(&world->colliders, item);
 }
