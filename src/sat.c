@@ -9,7 +9,7 @@ void sat_ProjectToAxis(polygon_t polygon, Vector2 axis, float * min_r, float * m
     *min_r = INFINITY;
     *max_r = -INFINITY;
 
-    for (int p = 0; p < polygon.count; p += 1)
+    for (size_t p = 0; p < polygon.count; p += 1)
     {
         float q = Vector2DotProduct(polygon_GetPointGlobal(polygon, p), axis);
 
@@ -18,54 +18,88 @@ void sat_ProjectToAxis(polygon_t polygon, Vector2 axis, float * min_r, float * m
     }
 }
 
-float sat_GetCollisionDepth(polygon_t a, polygon_t b)
+Vector2 sat_FindArithmeticMean(polygon_t polygon) {
+    float sum_x, sum_y;
+
+    for (size_t i = 0; i < polygon.count; i += 1)
+    {
+        Vector2 point = polygon_GetPointGlobal(polygon, i);
+        sum_x += point.x;
+        sum_y += point.y;
+    }
+
+    return (Vector2){
+        .x = sum_x / polygon.count,
+        .y = sum_y / polygon.count,
+    };
+}
+
+bool sat_TestPolygonPolygon(polygon_t a, polygon_t b, float *depth, Vector2 *normal)
 {
 	polygon_t poly_1 = a;
 	polygon_t poly_2 = b;
 
-	float overlap_depth = INFINITY;
+	*depth = INFINITY;
 
-	for (int shape = 0; shape < 2; shape += 1)
-	{
-		if (shape == 1)
-		{
-			poly_1 = b;
-			poly_2 = a;
-		}
+    for (size_t i = 0; i < poly_1.count; i += 1)
+    {
+        Vector2 point_a = polygon_GetPointGlobal(poly_1, i);
+        Vector2 point_b = polygon_GetPointGlobal(poly_1, i + 1);
 
-		for (int i = 0; i < poly_1.count; i += 1)
-		{
-			Vector2 axis_projection = {-(polygon_GetPointGlobal(poly_1, i + 1).y - polygon_GetPointGlobal(poly_1, i).y),
-									     polygon_GetPointGlobal(poly_1, i + 1).x - polygon_GetPointGlobal(poly_1, i).x};
+        Vector2 edge = Vector2Subtract(point_a, point_b);
+        Vector2 axis = Vector2Normalize((Vector2){-edge.y, edge.x});
 
-			float axis_length  = sqrtf(axis_projection.x * axis_projection.x + axis_projection.y * axis_projection.y);
-			axis_projection.x /= axis_length;
-			axis_projection.y /= axis_length;
+        float min_r1, max_r1;
+        sat_ProjectToAxis(poly_1, axis, &min_r1, &max_r1);
 
-			float min_r1, max_r1;
-			sat_ProjectToAxis(poly_1, axis_projection, &min_r1, &max_r1);
+        float min_r2, max_r2;
+        sat_ProjectToAxis(poly_2, axis, &min_r2, &max_r2);
 
-			float min_r2, max_r2;
-			sat_ProjectToAxis(poly_2, axis_projection, &min_r2, &max_r2);
+        if (!(max_r2 >= min_r1 && max_r1 >= min_r2))
+            return false;
 
-			overlap_depth = min(min(max_r1, max_r2) - max(min_r1, min_r2), overlap_depth);
+        float axis_depth = min(max_r1, max_r2) - max(min_r1, min_r2);
+        if (axis_depth < *depth)
+        {
+            *depth  = axis_depth;
+            *normal = axis;
+        }
+    }
 
-			if (!(max_r2 >= min_r1 && max_r1 >= min_r2))
-				return 0;
-		}
-	}
+    for (size_t i = 0; i < poly_2.count; i += 1)
+    {
+        Vector2 point_a = polygon_GetPointGlobal(poly_2, i);
+        Vector2 point_b = polygon_GetPointGlobal(poly_2, i + 1);
 
-	return overlap_depth;
-}
+        Vector2 edge = Vector2Subtract(point_a, point_b);
+        Vector2 axis = Vector2Normalize((Vector2){-edge.y, edge.x});
 
-Vector2 sat_GetCorrectedLocation(polygon_t a, polygon_t b, float overlap_depth)
-{
-		Vector2 d = {b.position.x - a.position.x, b.position.y - a.position.y};
-		float   s = sqrtf(d.x * d.x + d.y * d.y);
+        float min_r1, max_r1;
+        sat_ProjectToAxis(poly_1, axis, &min_r1, &max_r1);
 
-		Vector2 position = a.position;
-		position.x      -= overlap_depth * d.x / s;
-		position.y      -= overlap_depth * d.y / s;
+        float min_r2, max_r2;
+        sat_ProjectToAxis(poly_2, axis, &min_r2, &max_r2);
 
-		return position;
+        if (!(max_r2 >= min_r1 && max_r1 >= min_r2))
+            return false;
+
+        float axis_depth = min(max_r1, max_r2) - max(min_r1, min_r2);
+        if (axis_depth < *depth)
+        {
+            *depth  = axis_depth;
+            *normal = axis;
+        }
+    }
+
+    *depth /= Vector2Length(*normal);
+    *normal = Vector2Normalize(*normal);
+
+    Vector2 center_a  = sat_FindArithmeticMean(poly_1);
+    Vector2 center_b  = sat_FindArithmeticMean(poly_2);
+    Vector2 direction = Vector2Subtract(center_a, center_b);
+
+    if (Vector2DotProduct(direction, *normal) > 0)
+        *normal = Vector2Scale(*normal, -1);
+
+	return true;
 }

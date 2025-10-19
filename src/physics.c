@@ -30,17 +30,20 @@ void world_Update(world_t *world, float dt)
 			collider_t *collider_j = collider_array_Get(&world->colliders, j);
 			if (!collider_j->enabled) continue;
 
-		    float depth = sat_GetCollisionDepth(collider_i->shape, collider_j->shape);
-	        if (depth <= 0) continue;
+            float   depth     = 0;
+            Vector2 normal    = {0};
+		    bool    collision = sat_TestPolygonPolygon(collider_i->shape, collider_j->shape, &depth, &normal);
+	        if (!collision) continue;
 
             switch (collider_j->kind) {
 				case COLLIDER_KIND_STRUCTURE: {
-					collider_i->shape.position = sat_GetCorrectedLocation(collider_i->shape, collider_j->shape, depth);
+				    collider_i->shape.position = Vector2Subtract(collider_i->shape.position, Vector2Scale(normal, depth));
 					break;
 				}
 
 				case COLLIDER_KIND_ENTITY: {
-					collider_i->shape.position = sat_GetCorrectedLocation(collider_i->shape, collider_j->shape, depth / 2);
+				    collider_i->shape.position = Vector2Subtract(collider_i->shape.position, Vector2Scale(normal, depth / 2));
+				    collider_j->shape.position = Vector2Add(collider_j->shape.position, Vector2Scale(normal, depth / 2));
 					break;
 				}
 
