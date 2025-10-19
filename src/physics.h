@@ -11,7 +11,7 @@ typedef enum {
 
 typedef struct {
 	collider_kind_t kind;
-	poly_t          shape;   // Currently holds the position
+	polygon_t       shape;   // Currently holds the position
 	bool            enabled;
 } collider_t;
 

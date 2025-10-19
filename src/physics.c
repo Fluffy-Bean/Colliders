@@ -1,4 +1,5 @@
 #include "common.h"
+#include "types.h"
 #include "array.h"
 #include "sat.h"
 #include "physics.h"
@@ -30,24 +31,23 @@ void world_Update(world_t *world, float dt)
 			collider_t *collider_j = collider_array_Get(&world->colliders, j);
 			if (!collider_j->enabled) continue;
 
-		    float depth = sat_getCollisionDepth(collider_i->shape, collider_j->shape);
-	        if (depth > 0)
-			{
-				switch (collider_j->kind) {
-					case COLLIDER_KIND_STRUCTURE: {
-						collider_i->shape.position = sat_getCorrectedLocation(collider_i->shape, collider_j->shape, depth);
-						break;
-					}
+		    float depth = sat_GetCollisionDepth(collider_i->shape, collider_j->shape);
+	        if (depth <= 0) continue;
 
-					case COLLIDER_KIND_ENTITY: {
-						collider_i->shape.position = sat_getCorrectedLocation(collider_i->shape, collider_j->shape, depth / 2);
-						break;
-					}
+            switch (collider_j->kind) {
+				case COLLIDER_KIND_STRUCTURE: {
+					collider_i->shape.position = sat_GetCorrectedLocation(collider_i->shape, collider_j->shape, depth);
+					break;
+				}
 
-					case COLLIDER_KIND_AREA: {
-						 // ToDo: Call a function or something here
-						break;
-					}
+				case COLLIDER_KIND_ENTITY: {
+					collider_i->shape.position = sat_GetCorrectedLocation(collider_i->shape, collider_j->shape, depth / 2);
+					break;
+				}
+
+				case COLLIDER_KIND_AREA: {
+					 // ToDo: Call a function or something here
+					break;
 				}
 			}
 		}

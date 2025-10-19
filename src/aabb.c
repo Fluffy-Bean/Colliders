@@ -4,15 +4,35 @@
 #include "common.h"
 #include "aabb.h"
 
-bool aabb_isColliding(rect_t a, rect_t b)
+bool aabb_IsColliding(rectangle_t a, rectangle_t b)
 {
-    return rect_right(a) > rect_left(b) &&
-           rect_left(a) < rect_right(b) &&
-           rect_bottom(a) > rect_top(b) &&
-           rect_top(a) < rect_bottom(b);
+    return rectangle_GetRight(a) > rectangle_GetLeft(b) &&
+           rectangle_GetLeft(a) < rectangle_GetRight(b) &&
+           rectangle_GetBottom(a) > rectangle_GetTop(b) &&
+           rectangle_GetTop(a) < rectangle_GetBottom(b);
 }
 
-collision_side_t aabb_getCollisionSide(rect_t a, rect_t b)
+collision_side_t aabb_GetCollisionSideFromSlope(collision_side_t collision_side, float velocity_slope, float nearest_corner_slope)
+{
+    if ((collision_side & COLLISION_TOP) == COLLISION_TOP)
+    {
+        if ((collision_side & COLLISION_LEFT) == COLLISION_LEFT)
+            return velocity_slope > nearest_corner_slope ? COLLISION_TOP : COLLISION_LEFT;
+        else if ((collision_side & COLLISION_RIGHT) == COLLISION_RIGHT)
+            return velocity_slope < nearest_corner_slope ? COLLISION_TOP : COLLISION_RIGHT;
+    }
+    else if ((collision_side & COLLISION_BOTTOM) == COLLISION_BOTTOM)
+    {
+        if ((collision_side & COLLISION_LEFT) == COLLISION_LEFT)
+            return velocity_slope < nearest_corner_slope ? COLLISION_BOTTOM : COLLISION_LEFT;
+        else if ((collision_side & COLLISION_RIGHT) == COLLISION_RIGHT)
+            return velocity_slope > nearest_corner_slope ? COLLISION_BOTTOM : COLLISION_RIGHT;
+    }
+
+    return COLLISION_NONE;
+}
+
+collision_side_t aabb_GetCollisionSide(rectangle_t a, rectangle_t b)
 {
     float corner_slope_rise = 0;
     float corner_slope_run  = 0;
@@ -21,40 +41,40 @@ collision_side_t aabb_getCollisionSide(rect_t a, rect_t b)
 
     collision_side_t collision_side = COLLISION_NONE;
 
-    if (rect_right(a) <= rect_left(b))
+    if (rectangle_GetRight(a) <= rectangle_GetLeft(b))
     {
         collision_side  |= COLLISION_LEFT;
-        corner_slope_run = rect_left(b) - rect_right(a);
+        corner_slope_run = rectangle_GetLeft(b) - rectangle_GetRight(a);
 
-        if (rect_bottom(a) <= rect_top(b))
+        if (rectangle_GetBottom(a) <= rectangle_GetTop(b))
         {
             collision_side   |= COLLISION_TOP;
-            corner_slope_rise = rect_top(b) - rect_bottom(a);
+            corner_slope_rise = rectangle_GetTop(b) - rectangle_GetBottom(a);
         }
-        else if (rect_top(a) >= rect_bottom(b))
+        else if (rectangle_GetTop(a) >= rectangle_GetBottom(b))
         {
             collision_side   |= COLLISION_BOTTOM;
-            corner_slope_rise = rect_bottom(b) - rect_top(a);
+            corner_slope_rise = rectangle_GetBottom(b) - rectangle_GetTop(a);
         }
         else
         {
             return COLLISION_LEFT;
         }
     }
-    else if (rect_left(a) >= rect_right(b))
+    else if (rectangle_GetLeft(a) >= rectangle_GetRight(b))
     {
         collision_side  |= COLLISION_RIGHT;
-        corner_slope_run = rect_right(b) - rect_left(a);
+        corner_slope_run = rectangle_GetRight(b) - rectangle_GetLeft(a);
 
-        if (rect_bottom(a) <= rect_top(b))
+        if (rectangle_GetBottom(a) <= rectangle_GetTop(b))
         {
             collision_side   |= COLLISION_TOP;
-            corner_slope_rise = rect_bottom(a) - rect_top(b);
+            corner_slope_rise = rectangle_GetBottom(a) - rectangle_GetTop(b);
         }
-        else if (rect_top(a) >= rect_bottom(b))
+        else if (rectangle_GetTop(a) >= rectangle_GetBottom(b))
         {
             collision_side   |= COLLISION_BOTTOM;
-            corner_slope_rise = rect_top(a) - rect_bottom(b);
+            corner_slope_rise = rectangle_GetTop(a) - rectangle_GetBottom(b);
         }
         else
         {
@@ -63,44 +83,18 @@ collision_side_t aabb_getCollisionSide(rect_t a, rect_t b)
     }
     else
     {
-        if (rect_bottom(a) <= rect_top(b))
+        if (rectangle_GetBottom(a) <= rectangle_GetTop(b))
             return COLLISION_TOP;
-        else if (rect_top(a) >= rect_bottom(b))
+        else if (rectangle_GetTop(a) >= rectangle_GetBottom(b))
             return COLLISION_BOTTOM;
         else
             return COLLISION_NONE;
     }
 
-    return aabb_getCollisionSideFromSlope(collision_side,
-                                          velocity_slope,
-                                          corner_slope_rise / corner_slope_run);
+    return aabb_GetCollisionSideFromSlope(collision_side, velocity_slope, corner_slope_rise / corner_slope_run);
 }
 
-collision_side_t aabb_getCollisionSideFromSlope(collision_side_t collision_side, float velocity_slope, float nearest_corner_slope)
-{
-    if ((collision_side & COLLISION_TOP) == COLLISION_TOP)
-    {
-        if ((collision_side & COLLISION_LEFT) == COLLISION_LEFT)
-            return velocity_slope > nearest_corner_slope ? COLLISION_TOP
-                                                         : COLLISION_LEFT;
-        else if ((collision_side & COLLISION_RIGHT) == COLLISION_RIGHT)
-            return velocity_slope < nearest_corner_slope ? COLLISION_TOP
-                                                         : COLLISION_RIGHT;
-    }
-    else if ((collision_side & COLLISION_BOTTOM) == COLLISION_BOTTOM)
-    {
-        if ((collision_side & COLLISION_LEFT) == COLLISION_LEFT)
-            return velocity_slope < nearest_corner_slope ? COLLISION_BOTTOM
-                                                         : COLLISION_LEFT;
-        else if ((collision_side & COLLISION_RIGHT) == COLLISION_RIGHT)
-            return velocity_slope > nearest_corner_slope ? COLLISION_BOTTOM
-                                                         : COLLISION_RIGHT;
-    }
-
-    return COLLISION_NONE;
-}
-
-Vector2 aabb_getCorrectedLocation(rect_t a, rect_t b, collision_side_t collision_side)
+Vector2 aabb_GetCorrectedLocation(rectangle_t a, rectangle_t b, collision_side_t collision_side)
 {
     Vector2 corrected_location = { a.x, a.y };
 
@@ -112,20 +106,4 @@ Vector2 aabb_getCorrectedLocation(rect_t a, rect_t b, collision_side_t collision
     }
 
     return corrected_location;
-}
-
-float aabb_getDistance(rect_t a, rect_t b)
-{
-    Vector2 a_center = rect_middle(a);
-    Vector2 b_center = rect_middle(b);
-
-    return Vector2Distance(a_center, b_center);
-}
-
-float aabb_getDistanceSquared(rect_t a, rect_t b)
-{
-    Vector2 a_center = rect_middle(a);
-    Vector2 b_center = rect_middle(b);
-
-    return Vector2DistanceSqr(a_center, b_center);
 }

@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #include "common.h"
+#include "types.h"
 
 #define ARRAY_START_SIZE 8
 #define ARRAY_GROW_SIZE  2
@@ -67,4 +68,4 @@
         return array->data + index;                                                                                    \
     }
 
-DEFINE_ARRAY(rect_t, rect);
+DEFINE_ARRAY(rectangle_t, rectangle);

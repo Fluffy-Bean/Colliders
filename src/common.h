@@ -1,5 +1,4 @@
-#ifndef COLLIDERS_COMMON_H
-#define COLLIDERS_COMMON_H
+#pragma once
 
 #include <stdio.h>
 #include <stddef.h>
@@ -16,30 +15,3 @@
 
 #define min(a, b) (a < b ? a : b)
 #define max(a, b) (a > b ? a : b)
-
-typedef struct {
-    float x,  y;
-    float w,  h;
-    float vx, vy;
-} rect_t;
-
-#define rect_left(r)    (r.x)
-#define rect_right(r)   (r.x + r.w)
-#define rect_top(r)     (r.y)
-#define rect_bottom(r)  (r.y + r.h)
-#define rect_middleX(r) (r.x + (r.w / 2))
-#define rect_middleY(r) (r.y + (r.h / 2))
-#define rect_middle(r)  ((Vector2){rect_middleX(r), rect_middleY(r)})
-
-typedef struct {
-    Vector2  position;
-    Vector2 *points;
-    size_t   points_count;
-} poly_t;
-
-// Get polygon point but wrap it to the start
-#define poly_p(p, i) (p.points[(i) % p.points_count])
-// Get polygon point but in the global cord space
-#define poly_g(p, i) (Vector2Add(p.position, poly_p(p, i)))
-
-#endif

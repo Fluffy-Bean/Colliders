@@ -1,31 +1,32 @@
 #include "common.h"
+#include "types.h"
 #include "physics.h"
 
 #define PLAYER_SPEED 200
 
 // Inefficient, but its for testing anyways...
-void polygon_draw(poly_t polygon, Color color)
+void polygon_draw(polygon_t polygon, Color color)
 {
-    for (int i = 0; i < polygon.points_count; i += 1)
+    for (int i = 0; i < polygon.count; i += 1)
     {
 		DrawTriangle(polygon.position,
-					 poly_g(polygon, i),
-					 poly_g(polygon, i + 1),
+					 polygon_GetPointGlobal(polygon, i),
+					 polygon_GetPointGlobal(polygon, i + 1),
 					 color);
     }
 }
 
-void polygon_drawLines(poly_t polygon, Color color)
+void polygon_drawLines(polygon_t polygon, Color color)
 {
-    for (int i = 0; i < polygon.points_count; i += 1)
+    for (int i = 0; i < polygon.count; i += 1)
     {
-    	DrawLineV(poly_g(polygon, i),
-                  poly_g(polygon, i + 1),
+    	DrawLineV(polygon_GetPointGlobal(polygon, i),
+                  polygon_GetPointGlobal(polygon, i + 1),
                   color);
     }
 }
 
-void rect_draw(rect_t rect, Color color)
+void rect_draw(rectangle_t rect, Color color)
 {
     DrawRectangle(rect.x,
                   rect.y,
@@ -56,7 +57,7 @@ int main(int argc, char ** argv)
 	                { 25, 25 },
 	                { 25, -25 },
                 },
-                .points_count = 4,
+                .count = 4,
 			},
 			.kind = COLLIDER_KIND_ENTITY,
 			.enabled = true,
