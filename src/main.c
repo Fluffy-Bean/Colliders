@@ -2,7 +2,9 @@
 #include "types.h"
 #include "physics.h"
 
-#define PLAYER_SPEED 200
+#define WINDOW_WIDTH  800
+#define WINDOW_HEIGHT 600
+#define PLAYER_SPEED  250
 
 // Inefficient, but its for testing anyways...
 void polygon_draw(polygon_t polygon, Color color)
@@ -37,8 +39,13 @@ void rect_draw(rectangle_t rect, Color color)
 
 int main(int argc, char ** argv)
 {
-    InitWindow(800, 600, "Hello, Worm");
+    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Hello, Worm");
     SetTargetFPS(60);
+
+    Camera2D camera = {0};
+    camera.offset = (Vector2){ WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 };
+    camera.rotation = 0;
+    camera.zoom = 1;
 
     world_t phys_world = {0};
     world_Create(&phys_world);
@@ -48,8 +55,8 @@ int main(int argc, char ** argv)
 		collider_t c = {
             .shape = {
 				.position = {
-                    GetRandomValue(100, 700),
-                    GetRandomValue(100, 500),
+                    GetRandomValue(0, 200),
+                    GetRandomValue(0, 200),
 			    },
                 .points = (Vector2[]){
 	                { -25, -25 },
@@ -67,22 +74,37 @@ int main(int argc, char ** argv)
 
 	collider_t *collider = collider_array_Get(&phys_world.colliders, 0);
 	collider->kind       = COLLIDER_KIND_STRUCTURE;
+
     while (!WindowShouldClose())
     {
-        collider->shape.position = GetMousePosition();
+        float   player_speed = PLAYER_SPEED * GetFrameTime();
+        Vector2 direction    = {0};
+
+        if (IsKeyDown(KEY_W)) direction.y -= 1;
+        if (IsKeyDown(KEY_S)) direction.y += 1;
+        if (IsKeyDown(KEY_A)) direction.x -= 1;
+        if (IsKeyDown(KEY_D)) direction.x += 1;
+
+        direction                = Vector2Scale(Vector2Normalize(direction), player_speed);
+        collider->shape.position = Vector2Add(collider->shape.position, direction);
 
         world_Update(&phys_world, GetFrameTime());
 
+        camera.target = collider->shape.position;
+
         BeginDrawing();
         ClearBackground(G_WHITE);
+        BeginMode2D(camera);
 
-		polygon_draw(collider->shape, G_RED);
+        polygon_draw(collider->shape, G_RED);
 		for (size_t i = 1; i < phys_world.colliders.count; i += 1)
 	    {
 	    	collider_t *collider_i = collider_array_Get(&phys_world.colliders, i);
             polygon_draw(collider_i->shape, G_GREEN);
 	    }
 
+        EndMode2D();
+        DrawFPS(10, 10);
         EndDrawing();
     }
 
